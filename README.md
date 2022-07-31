@@ -1,4 +1,4 @@
-# LogAnalyzer
+# logAnalyzer
 
 解析Robocup2d日志文件(.rcg)生成json文件
 
