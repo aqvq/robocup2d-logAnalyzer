@@ -9,12 +9,18 @@ import (
 )
 
 func main() {
-	// 读取配置文件
-	config := ReadYamlConfig("config.yaml")
-	parseCmd(config)
-	if config.Verbose {
-		printConfig(config)
+	// 如果不存在配置文件则创建
+	var configFilename = "config.yaml"
+	if !PathExists(configFilename) {
+		WriteYamlConfig(configFilename)
 	}
+	// 读取配置文件
+	config := ReadYamlConfig(configFilename)
+	ParseCmd(config)
+	if config.Verbose {
+		PrintConfig(config)
+	}
+	// 声明变量
 	wg := new(sync.WaitGroup)
 	startTime := time.Now()
 	var count int64 = 0
