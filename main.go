@@ -25,7 +25,7 @@ func main() {
 	startTime := time.Now()
 	var count int64 = 0
 	// 读取日志文件
-	for _, dir := range config.SourceDir {
+	for _, dir := range config.Source {
 		var files, _ = GetFiles(dir)
 		for i, source := range files {
 			count += 1
@@ -35,10 +35,10 @@ func main() {
 				fmt.Printf("Parsing log files：%d/%d\n", i+1, len(files))
 			}
 			var dest string
-			if strings.ToLower(config.OutputDir) == "default" {
-				dest = strings.Split(source, ".")[0] + ".json"
+			if strings.ToLower(config.Output) == "default" {
+				dest = filepath.Join(filepath.Dir(source), strings.TrimSuffix(filepath.Base(source), ".rcg")+".json")
 			} else {
-				dest = filepath.Join(config.OutputDir, strings.Split(filepath.Base(source), ".")[0]+".json")
+				dest = filepath.Join(config.Output, strings.TrimSuffix(filepath.Base(source), ".rcg")+".json")
 			}
 			if PathExists(dest) && !config.Overwrite {
 				// 当已经存在文件时，不进行覆盖重写操作，直接跳过下面的代码
@@ -49,33 +49,33 @@ func main() {
 			}
 
 			// 解析
-			if config.Format == "string" {
-				if config.MultiThreads {
+			if config.DataType == "string" {
+				if config.Multithreading {
 					wg.Add(1)
-					go AnalyzerStr(source, dest, config.MarshalIndent, func(filename string) {
+					go AnalyzerStr(source, dest, config.Formatting, func(filename string) {
 						if config.Verbose {
 							fmt.Println("Writing json file done: ", filename)
 						}
 						wg.Done()
 					})
 				} else {
-					AnalyzerStr(source, dest, config.MarshalIndent, func(filename string) {
+					AnalyzerStr(source, dest, config.Formatting, func(filename string) {
 						if config.Verbose {
 							fmt.Println("Writing json file done: ", filename)
 						}
 					})
 				}
 			} else {
-				if config.MultiThreads {
+				if config.Multithreading {
 					wg.Add(1)
-					go Analyzer(source, dest, config.MarshalIndent, func(filename string) {
+					go Analyzer(source, dest, config.Formatting, func(filename string) {
 						if config.Verbose {
 							fmt.Println("Writing json file done: ", filename)
 						}
 						wg.Done()
 					})
 				} else {
-					Analyzer(source, dest, config.MarshalIndent, func(filename string) {
+					Analyzer(source, dest, config.Formatting, func(filename string) {
 						if config.Verbose {
 							fmt.Println("Writing json file done: ", filename)
 						}

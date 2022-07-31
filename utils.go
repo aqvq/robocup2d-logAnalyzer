@@ -12,14 +12,14 @@ import (
 )
 
 type Config struct {
-	SourceDir     []string `yaml:"sourceDir"`
-	OutputDir     string   `yaml:"outputDir"`
-	MarshalIndent bool     `yaml:"marshalIndent"`
-	Verbose       bool     `yaml:"verbose"`
-	Format        string   `yaml:"format"`
-	MultiThreads  bool     `yaml:"multiThreads"`
-	Timing        bool     `yaml:"timing"`
-	Overwrite     bool     `yaml:"overwrite"`
+	Source         []string `yaml:"source"`
+	Output         string   `yaml:"output"`
+	Formatting     bool     `yaml:"formatting"`
+	Verbose        bool     `yaml:"verbose"`
+	DataType       string   `yaml:"datatype"`
+	Multithreading bool     `yaml:"multithreading"`
+	Timing         bool     `yaml:"timing"`
+	Overwrite      bool     `yaml:"overwrite"`
 }
 
 // GetFiles 获取给定路径下的所有文件
@@ -57,61 +57,61 @@ func ReadYamlConfig(path string) *Config {
 			panic("Error parsing configuration file")
 		}
 	}
-	config.Format = strings.ToLower(config.Format)
+	config.DataType = strings.ToLower(config.DataType)
 	return config
 }
 
 // ParseCmd 解析命令行参数
 func ParseCmd(config *Config) {
-	flag.StringVar(&config.Format, "format", config.Format, "json文件的数据类型: string表示输出的数据全部是字符串格式, numeric表示输出的数据是数字类型. 使用string类型会使解析速度加快")
-	flag.StringVar(&config.Format, "f", config.Format, "--format")
-	flag.StringVar(&config.OutputDir, "output", config.OutputDir, "指定输出文件目录, default表示输出到源日志文件所在目录")
-	flag.StringVar(&config.OutputDir, "o", config.OutputDir, "--output")
-	flag.BoolVar(&config.Verbose, "verbose", config.Verbose, "输出详细信息")
+	flag.StringVar(&config.DataType, "datatype", config.DataType, "json文件记录数据的类型. string表示以字符类型记录数据, numeric表示以数值类型记录数据. 使用string类型会使解析速度加快")
+	flag.StringVar(&config.DataType, "d", config.DataType, "--datatype")
+	flag.StringVar(&config.Output, "output", config.Output, "指定json文件的输出目录, default表示输出到源文件所在目录")
+	flag.StringVar(&config.Output, "o", config.Output, "--output")
+	flag.BoolVar(&config.Verbose, "verbose", config.Verbose, "是否输出详细信息")
 	flag.BoolVar(&config.Verbose, "v", config.Verbose, "--verbose")
-	flag.BoolVar(&config.Timing, "timing", config.Timing, "计算解析用时")
+	flag.BoolVar(&config.Timing, "timing", config.Timing, "是否记录解析用时")
 	flag.BoolVar(&config.Timing, "t", config.Timing, "--timing")
-	flag.BoolVar(&config.MarshalIndent, "indent", config.MarshalIndent, "json文件格式化缩进, 格式化可以让json文件结构更清晰, 但解析速度会变慢, 并且文件也会变大")
-	flag.BoolVar(&config.MarshalIndent, "i", config.MarshalIndent, "--indent")
-	flag.BoolVar(&config.Overwrite, "overwrite", config.Overwrite, "覆盖同名json文件")
+	flag.BoolVar(&config.Formatting, "formatting", config.Formatting, "是否格式化缩进json文件, 格式化可以让json文件结构更清晰, 但会降低解析速度并增大输出文件")
+	flag.BoolVar(&config.Formatting, "f", config.Formatting, "--formatting")
+	flag.BoolVar(&config.Overwrite, "overwrite", config.Overwrite, "当检测到已存在同名json文件时, 是否进行覆写操作")
 	flag.BoolVar(&config.Overwrite, "w", config.Overwrite, "--overwrite")
-	flag.BoolVar(&config.MultiThreads, "multithreads", config.MultiThreads, "启用多线程来提高解析速度")
-	flag.BoolVar(&config.MultiThreads, "m", config.MultiThreads, "--multithreads")
+	flag.BoolVar(&config.Multithreading, "multithreading", config.Multithreading, "是否启用多线程来提高解析速度")
+	flag.BoolVar(&config.Multithreading, "m", config.Multithreading, "--multithreading")
 	flag.Parse()
 	if flag.NArg() > 0 {
-		config.SourceDir = flag.Args()
+		config.Source = flag.Args()
 	}
 }
 
 // PrintConfig 打印Config结构体中的数据
 func PrintConfig(config *Config) {
 	fmt.Println("Configuration:")
-	fmt.Println("- Source directory: ")
-	for _, dir := range config.SourceDir {
+	fmt.Println("- Source: ")
+	for _, dir := range config.Source {
 		fmt.Println("  - " + dir)
 	}
-	fmt.Println("- Output directory: " + config.OutputDir)
-	if config.MarshalIndent {
-		fmt.Println("- Marshal indent: true")
+	fmt.Println("- Output: " + config.Output)
+	if config.Formatting {
+		fmt.Println("- Formatting: true")
 	} else {
-		fmt.Println("- Marshal indent: false")
+		fmt.Println("- Formatting: false")
 	}
 	if config.Verbose {
 		fmt.Println("- Verbose: true")
 	} else {
 		fmt.Println("- Verbose: false")
 	}
-	if config.Format == "string" {
-		fmt.Println("- Format: string")
-	} else if config.Format == "numeric" {
-		fmt.Println("- Format: numeric")
+	if config.DataType == "string" {
+		fmt.Println("- DataType: string")
+	} else if config.DataType == "numeric" {
+		fmt.Println("- DataType: numeric")
 	} else {
 		panic("Error parsing configuration file")
 	}
-	if config.MultiThreads {
-		fmt.Println("- MultiThreads: true")
+	if config.Multithreading {
+		fmt.Println("- Multithreading: true")
 	} else {
-		fmt.Println("- MultiThreads: false")
+		fmt.Println("- Multithreading: false")
 	}
 	if config.Timing {
 		fmt.Println("- Timing: true")
@@ -131,44 +131,35 @@ func WriteYamlConfig(filename string) {
 	if err != nil {
 		panic("Error Creating configuration file")
 	}
-	_, err = file.WriteString(`# Config.yaml
+	_, err = file.WriteString(`# config.yaml
 # created at 2022年7月31日 by Shang
-#
-# 注意:
-# 冒号后面一定要有空格
-# 缩进要用空格
-# 选项不区分大小写
 
-# sourceDir:
-# 这里指定包含日志文件的源文件夹, 程序会自动遍历该目录下的所有日志文件, 包括子目录, 注意格式:
-#  - "这里输入一个目录"
-#  - "可以再添加一个目录"
-#  - “”
-# 举例:
-#  - C:\Users\shang\GolandProjects\logAnalyzer\logs
-#  - D:\logs
-sourceDir:
-  - ./logs
+# source:
+# 指定包含日志文件的源文件夹, 程序会自动遍历该目录及其子目录下的所有日志文件. 注意格式:
+#  - 这里输入一个目录
+#  - 可以再添加一个目录
+source:
+  - .
 
-# outputDir: "这里指定输出文件目录, default表示输出到源日志文件所在目录"
-outputDir: default
+# output: 指定json文件的输出目录, default表示输出到源文件所在目录
+output: default
 
-# marshalIndent: true/false 表示json文件是否格式化缩进, 格式化可以让json文件结构更清晰, 但解析速度会变慢, 并且文件也会变大
-marshalIndent: false
+# formatting: true/false 是否格式化缩进json文件, 格式化可以让json文件结构更清晰, 但会降低解析速度并增大输出文件
+formatting: false
 
 # verbose: true/false 是否输出详细信息
 verbose: true
 
-# format: string/numeric 输出json数据类型: string表示输出的数据全部是字符串格式, numeric表示输出的数据是数字类型. 使用string类型会使解析速度加快
-format: string
+# datatype: string/numeric json文件记录数据的类型. string表示以字符类型记录数据, numeric表示以数值类型记录数据. 使用string类型会使解析速度加快
+datatype: string
 
-# multiThreads: true/false 表示是否启用多线程来提高解析速度
-multiThreads: true
+# multithreading: true/false 是否启用多线程来提高解析速度
+multithreading: true
 
-# timing: true/false 是否计算解析用时
+# timing: true/false 是否记录解析用时
 timing: true
 
-# overwrite: true/false 当检测到已存在同名输出文件时，是否进行覆盖重新生成
+# overwrite: true/false 当检测到已存在同名json文件时, 是否进行覆写操作
 overwrite: false
 `)
 	if err != nil {

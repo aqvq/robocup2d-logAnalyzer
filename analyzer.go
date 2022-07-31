@@ -15,7 +15,7 @@ type VectorStr struct {
 }
 
 type PlayerIDStr struct {
-	Side string `json:"side"` // false为left, true为right
+	Side string `json:"side"`
 	Num  string `json:"num"`
 }
 
@@ -56,7 +56,7 @@ type PlayerStr struct {
 	Vel             VectorStr      `json:"velocity"`
 	BodyAngle       VectorStr      `json:"bodyAngle"`
 	Arm             ArmStr         `json:"arm,omitempty"`
-	ViewMode        string         `json:"viewMode"` // false为l, true为h
+	ViewMode        string         `json:"viewMode"`
 	VisibleAngle    string         `json:"visibleAngle"`
 	Stamina         string         `json:"stamina"`
 	Effort          string         `json:"effort"`
@@ -261,7 +261,7 @@ type Vector struct {
 }
 
 type PlayerID struct {
-	Side string `json:"side"` // false为left, true为right
+	Side string `json:"side"`
 	Num  uint8  `json:"num"`
 }
 
@@ -302,7 +302,7 @@ type Player struct {
 	Vel             Vector      `json:"velocity"`
 	BodyAngle       Vector      `json:"bodyAngle"`
 	Arm             Arm         `json:"arm,omitempty"`
-	ViewMode        string      `json:"viewMode"` // false为l, true为h
+	ViewMode        string      `json:"viewMode"`
 	VisibleAngle    uint8       `json:"visibleAngle"`
 	Stamina         float32     `json:"stamina"`
 	Effort          float32     `json:"effort"`
