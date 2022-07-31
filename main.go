@@ -11,6 +11,10 @@ import (
 func main() {
 	// 读取配置文件
 	config := ReadYamlConfig("config.yaml")
+	parseCmd(config)
+	if config.Verbose {
+		printConfig(config)
+	}
 	wg := new(sync.WaitGroup)
 	startTime := time.Now()
 	var count int64 = 0
@@ -29,6 +33,13 @@ func main() {
 				dest = strings.Split(source, ".")[0] + ".json"
 			} else {
 				dest = filepath.Join(config.OutputDir, strings.Split(filepath.Base(source), ".")[0]+".json")
+			}
+			if PathExists(dest) && !config.Overwrite {
+				// 当已经存在文件时，不进行覆盖重写操作，直接跳过下面的代码
+				if config.Verbose {
+					fmt.Println("Skipping existing log file: ", dest)
+				}
+				continue
 			}
 
 			// 解析
@@ -73,7 +84,7 @@ func main() {
 		elapsedTime := time.Since(startTime)
 		fmt.Printf("Total time: %s\n", elapsedTime)
 		fmt.Printf("Tasks: %d\n", count)
-		fmt.Printf("Average time: %s\n", time.Duration(elapsedTime.Milliseconds()/count)*time.Millisecond)
+		fmt.Printf("Average time: %s\n", time.Duration(elapsedTime.Nanoseconds()/count)*time.Nanosecond)
 	}
 	fmt.Println("It’s all done!")
 }

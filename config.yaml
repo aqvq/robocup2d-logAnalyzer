@@ -34,3 +34,6 @@ multiThreads: true
 
 # timing: true/false 是否计算解析用时
 timing: true
+
+# overwrite: true/false 当检测到已存在同名输出文件时，是否进行覆盖重新生成
+overwrite: false
