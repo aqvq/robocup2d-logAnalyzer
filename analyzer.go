@@ -117,7 +117,10 @@ func AnalyzerStr(source string, dest string, marshal bool, callback func(string)
 				if err != nil {
 					panic("Error constructing json file")
 				}
-				destFile.Write(data)
+				_, err2 := destFile.Write(data)
+				if err2 != nil {
+					return
+				}
 			} else {
 				err := destEncoder.Encode(cycle)
 				if err != nil {
@@ -127,7 +130,7 @@ func AnalyzerStr(source string, dest string, marshal bool, callback func(string)
 		}
 	}
 	if callback != nil {
-		callback(source)
+		callback(dest)
 	}
 }
 
@@ -360,7 +363,10 @@ func Analyzer(source string, dest string, marshal bool, callback func(string)) {
 				if err != nil {
 					panic("Error constructing json file")
 				}
-				destFile.Write(data)
+				_, err2 := destFile.Write(data)
+				if err2 != nil {
+					return
+				}
 			} else {
 				err := destEncoder.Encode(cycle)
 				if err != nil {
@@ -370,7 +376,7 @@ func Analyzer(source string, dest string, marshal bool, callback func(string)) {
 		}
 	}
 	if callback != nil {
-		callback(source)
+		callback(dest)
 	}
 }
 

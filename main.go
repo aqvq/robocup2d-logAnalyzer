@@ -30,9 +30,9 @@ func main() {
 		for i, source := range files {
 			count += 1
 			if config.Verbose {
-				fmt.Printf("Processing log file(%d/%d): %s\n", i+1, len(files), source)
+				fmt.Printf("Parsing log file(%d/%d): %s\n", i+1, len(files), source)
 			} else {
-				fmt.Printf("Processing log files：%d/%d\n", i+1, len(files))
+				fmt.Printf("Parsing log files：%d/%d\n", i+1, len(files))
 			}
 			var dest string
 			if strings.ToLower(config.OutputDir) == "default" {
@@ -54,14 +54,14 @@ func main() {
 					wg.Add(1)
 					go AnalyzerStr(source, dest, config.MarshalIndent, func(filename string) {
 						if config.Verbose {
-							fmt.Println("Parsing log file done: ", filename)
+							fmt.Println("Writing json file done: ", filename)
 						}
 						wg.Done()
 					})
 				} else {
 					AnalyzerStr(source, dest, config.MarshalIndent, func(filename string) {
 						if config.Verbose {
-							fmt.Println("Parsing log file done: ", filename)
+							fmt.Println("Writing json file done: ", filename)
 						}
 					})
 				}
@@ -70,14 +70,14 @@ func main() {
 					wg.Add(1)
 					go Analyzer(source, dest, config.MarshalIndent, func(filename string) {
 						if config.Verbose {
-							fmt.Println("Parsing log file done: ", filename)
+							fmt.Println("Writing json file done: ", filename)
 						}
 						wg.Done()
 					})
 				} else {
 					Analyzer(source, dest, config.MarshalIndent, func(filename string) {
 						if config.Verbose {
-							fmt.Println("Parsing log file done: ", filename)
+							fmt.Println("Writing json file done: ", filename)
 						}
 					})
 				}
