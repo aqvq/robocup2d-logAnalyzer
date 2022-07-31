@@ -109,9 +109,10 @@ func AnalyzerStr(source string, dest string, marshal bool, callback func(string)
 		if err == io.EOF {
 			break
 		}
-		processPlayModeStr(line, cycle)
-		processTeamStr(line, cycle)
-		if processShowStr(line, cycle) {
+		arr := strings.Split(line, " ")
+		processPlayModeStr(arr, cycle)
+		processTeamStr(arr, cycle)
+		if processShowStr(arr, cycle) {
 			if marshal {
 				data, err := json.MarshalIndent(cycle, "", "  ")
 				if err != nil {
@@ -135,9 +136,8 @@ func AnalyzerStr(source string, dest string, marshal bool, callback func(string)
 }
 
 // 处理每行的show数据
-func processShowStr(line string, cycle *CycleStr) bool {
+func processShowStr(arr []string, cycle *CycleStr) bool {
 	//cycle := new(Cycle)
-	arr := strings.Split(line, " ")
 	offset := 0
 
 	if arr[0] != "(show" {
@@ -146,16 +146,15 @@ func processShowStr(line string, cycle *CycleStr) bool {
 
 	cycle.ID = arr[1]
 	cycle.Ball.Pos = VectorStr{arr[3], arr[4]}
-	cycle.Ball.Vel = VectorStr{arr[5], arr[6][:len(arr[6])-1]}
-	cycle.Players = [22]PlayerStr{}
+	cycle.Ball.Vel = VectorStr{arr[5], TrimBracket(arr[6])}
 	offset += 7
 
 	for i := 0; i < 22; i++ {
 		// (l或(r部分
 		if strings.HasSuffix(arr[offset], "l") {
-			cycle.Players[i].ID = PlayerIDStr{Side: "left", Num: arr[offset+1][:len(arr[offset+1])-1]}
+			cycle.Players[i].ID = PlayerIDStr{Side: "left", Num: TrimBracket(arr[offset+1])}
 		} else {
-			cycle.Players[i].ID = PlayerIDStr{Side: "right", Num: arr[offset+1][:len(arr[offset+1])-1]}
+			cycle.Players[i].ID = PlayerIDStr{Side: "right", Num: TrimBracket(arr[offset+1])}
 		}
 		offset += 2
 
@@ -183,23 +182,23 @@ func processShowStr(line string, cycle *CycleStr) bool {
 		} else {
 			cycle.Players[i].ViewMode = "low"
 		}
-		cycle.Players[i].VisibleAngle = arr[offset+2][:len(arr[offset+2])-1]
+		cycle.Players[i].VisibleAngle = TrimBracket(arr[offset+2])
 		offset += 3
 
 		// (s部分
 		cycle.Players[i].Stamina = arr[offset+1]
 		cycle.Players[i].Effort = arr[offset+2]
 		cycle.Players[i].Recovery = arr[offset+3]
-		cycle.Players[i].StaminaCapacity = arr[offset+4][:len(arr[offset+4])-1]
+		cycle.Players[i].StaminaCapacity = TrimBracket(arr[offset+4])
 		offset += 5
 
 		// (f部分（可省略）
 		if arr[offset] == "(f" {
 			cycle.Players[i].Focus.IsFocusing = true
 			if arr[offset+1] == "l" {
-				cycle.Players[i].Focus.Player = PlayerIDStr{Side: "left", Num: arr[offset+2][:len(arr[offset+2])-1]}
+				cycle.Players[i].Focus.Player = PlayerIDStr{Side: "left", Num: TrimBracket(arr[offset+2])}
 			} else {
-				cycle.Players[i].Focus.Player = PlayerIDStr{Side: "right", Num: arr[offset+2][:len(arr[offset+2])-1]}
+				cycle.Players[i].Focus.Player = PlayerIDStr{Side: "right", Num: TrimBracket(arr[offset+2])}
 			}
 			offset += 3
 		} else {
@@ -219,40 +218,33 @@ func processShowStr(line string, cycle *CycleStr) bool {
 			Say:         arr[offset+8],
 			Tackle:      arr[offset+9],
 			Arm:         arr[offset+10],
-			AttentionTo: strings.Split(arr[offset+11], ")")[0]}
+			AttentionTo: TrimBracket(arr[offset+11])}
 		offset += 12
 	}
 	return true
 }
 
 // 处理(team数据
-func processTeamStr(line string, cycle *CycleStr) {
-	arr := strings.Split(line, " ")
+func processTeamStr(arr []string, cycle *CycleStr) {
 	if arr[0] != "(team" {
 		return
 	}
 	offset := 4
 	for {
-		if offset-4 >= len(arr) {
+		if offset-4 >= len(cycle.Score) {
 			break
 		}
-		if !strings.HasSuffix(arr[offset], ")") {
-			cycle.Score[offset-4] = arr[offset]
-			offset += 1
-		} else {
-			cycle.Score[offset-4] = arr[offset][:len(arr[offset])-1]
-			break
-		}
+		cycle.Score[offset-4] = TrimBracket(arr[offset])
+		offset += 1
 	}
 }
 
 // 处理(playmode数据
-func processPlayModeStr(line string, cycle *CycleStr) {
-	arr := strings.Split(line, " ")
+func processPlayModeStr(arr []string, cycle *CycleStr) {
 	if arr[0] != "(playmode" {
 		return
 	}
-	cycle.PlayMode = arr[2][:len(arr[2])-1]
+	cycle.PlayMode = TrimBracket(arr[2])
 }
 
 type Vector struct {
@@ -355,9 +347,10 @@ func Analyzer(source string, dest string, marshal bool, callback func(string)) {
 		if err == io.EOF {
 			break
 		}
-		processPlayMode(line, cycle)
-		processTeam(line, cycle)
-		if processShow(line, cycle) {
+		arr := strings.Split(line, " ")
+		processPlayMode(arr, cycle)
+		processTeam(arr, cycle)
+		if processShow(arr, cycle) {
 			if marshal {
 				data, err := json.MarshalIndent(cycle, "", "  ")
 				if err != nil {
@@ -381,27 +374,25 @@ func Analyzer(source string, dest string, marshal bool, callback func(string)) {
 }
 
 // 处理每行的show数据
-func processShow(line string, cycle *Cycle) bool {
+func processShow(arr []string, cycle *Cycle) bool {
 	//cycle := new(Cycle)
-	arr := strings.Split(line, " ")
-	offset := 0
-
 	if arr[0] != "(show" {
 		return false
 	}
 
+	offset := 0
 	cycle.ID = cast.ToUint16(arr[1])
 	cycle.Ball.Pos = Vector{cast.ToFloat32(arr[3]), cast.ToFloat32(arr[4])}
-	cycle.Ball.Vel = Vector{cast.ToFloat32(arr[5]), cast.ToFloat32(arr[6][:len(arr[6])-1])}
+	cycle.Ball.Vel = Vector{cast.ToFloat32(arr[5]), cast.ToFloat32(TrimBracket(arr[6]))}
 	cycle.Players = [22]Player{}
 	offset += 7
 
 	for i := 0; i < 22; i++ {
 		// (l或(r部分
 		if strings.HasSuffix(arr[offset], "l") {
-			cycle.Players[i].ID = PlayerID{Side: "left", Num: cast.ToUint8(arr[offset+1][:len(arr[offset+1])-1])}
+			cycle.Players[i].ID = PlayerID{Side: "left", Num: cast.ToUint8(TrimBracket(arr[offset+1]))}
 		} else {
-			cycle.Players[i].ID = PlayerID{Side: "right", Num: cast.ToUint8(arr[offset+1][:len(arr[offset+1])-1])}
+			cycle.Players[i].ID = PlayerID{Side: "right", Num: cast.ToUint8(TrimBracket(arr[offset+1]))}
 		}
 		offset += 2
 
@@ -426,23 +417,23 @@ func processShow(line string, cycle *Cycle) bool {
 		} else {
 			cycle.Players[i].ViewMode = "low"
 		}
-		cycle.Players[i].VisibleAngle = cast.ToUint8(arr[offset+2][:len(arr[offset+2])-1])
+		cycle.Players[i].VisibleAngle = cast.ToUint8(TrimBracket(arr[offset+2]))
 		offset += 3
 
 		// (s部分
 		cycle.Players[i].Stamina = cast.ToFloat32(arr[offset+1])
 		cycle.Players[i].Effort = cast.ToFloat32(arr[offset+2])
 		cycle.Players[i].Recovery = cast.ToFloat32(arr[offset+3])
-		cycle.Players[i].StaminaCapacity = cast.ToFloat32(arr[offset+4][:len(arr[offset+4])-1])
+		cycle.Players[i].StaminaCapacity = cast.ToFloat32(TrimBracket(arr[offset+4]))
 		offset += 5
 
 		// (f部分（可省略）
 		if arr[offset] == "(f" {
 			cycle.Players[i].Focus.IsFocusing = true
 			if arr[offset+1] == "l" {
-				cycle.Players[i].Focus.Player = PlayerID{Side: "left", Num: cast.ToUint8(arr[offset+2][:len(arr[offset+2])-1])}
+				cycle.Players[i].Focus.Player = PlayerID{Side: "left", Num: cast.ToUint8(TrimBracket(arr[offset+2]))}
 			} else {
-				cycle.Players[i].Focus.Player = PlayerID{Side: "right", Num: cast.ToUint8(arr[offset+2][:len(arr[offset+2])-1])}
+				cycle.Players[i].Focus.Player = PlayerID{Side: "right", Num: cast.ToUint8(TrimBracket(arr[offset+2]))}
 			}
 			offset += 3
 		} else {
@@ -461,15 +452,14 @@ func processShow(line string, cycle *Cycle) bool {
 			Say:         cast.ToUint(arr[offset+8]),
 			Tackle:      cast.ToUint(arr[offset+9]),
 			Arm:         cast.ToUint(arr[offset+10]),
-			AttentionTo: cast.ToUint(strings.Split(arr[offset+11], ")")[0])}
+			AttentionTo: cast.ToUint(TrimBracket(arr[offset+11]))}
 		offset += 12
 	}
 	return true
 }
 
 // 处理(team数据
-func processTeam(line string, cycle *Cycle) {
-	arr := strings.Split(line, " ")
+func processTeam(arr []string, cycle *Cycle) {
 	if arr[0] != "(team" {
 		return
 	}
@@ -482,17 +472,16 @@ func processTeam(line string, cycle *Cycle) {
 			cycle.Score[offset-4] = cast.ToUint16(arr[offset])
 			offset += 1
 		} else {
-			cycle.Score[offset-4] = cast.ToUint16(arr[offset][:len(arr[offset])-1])
+			cycle.Score[offset-4] = cast.ToUint16(TrimBracket(arr[offset]))
 			break
 		}
 	}
 }
 
 // 处理(playmode数据
-func processPlayMode(line string, cycle *Cycle) {
-	arr := strings.Split(line, " ")
+func processPlayMode(arr []string, cycle *Cycle) {
 	if arr[0] != "(playmode" {
 		return
 	}
-	cycle.PlayMode = arr[2][:len(arr[2])-1]
+	cycle.PlayMode = TrimBracket(arr[2])
 }

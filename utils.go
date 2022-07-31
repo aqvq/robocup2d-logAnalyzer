@@ -166,3 +166,31 @@ overwrite: false
 		panic("Error writing configuration file")
 	}
 }
+
+func TrimBracket(str string) string {
+	if len(str) == 0 {
+		return ""
+	}
+	end := len(str) - 1
+	start := 0
+	for {
+		if start < len(str) && str[start] == '(' {
+			start += 1
+		} else {
+			break
+		}
+	}
+	for {
+		if end >= 0 && str[end] == ')' {
+			end -= 1
+		} else {
+			end += 1
+			break
+		}
+	}
+	if start >= end {
+		return ""
+	} else {
+		return str[start:end]
+	}
+}
