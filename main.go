@@ -9,12 +9,18 @@ import (
 )
 
 func main() {
-	// 读取配置文件
-	config := ReadYamlConfig("config.yaml")
-	parseCmd(config)
-	if config.Verbose {
-		printConfig(config)
+	// 如果不存在配置文件则创建
+	var configFilename = "config.yaml"
+	if !PathExists(configFilename) {
+		WriteYamlConfig(configFilename)
 	}
+	// 读取配置文件
+	config := ReadYamlConfig(configFilename)
+	ParseCmd(config)
+	if config.Verbose {
+		PrintConfig(config)
+	}
+	// 声明变量
 	wg := new(sync.WaitGroup)
 	startTime := time.Now()
 	var count int64 = 0
@@ -37,7 +43,7 @@ func main() {
 			if PathExists(dest) && !config.Overwrite {
 				// 当已经存在文件时，不进行覆盖重写操作，直接跳过下面的代码
 				if config.Verbose {
-					fmt.Println("Skipping existing log file: ", dest)
+					fmt.Println("Skipping existing json file: ", dest)
 				}
 				continue
 			}
