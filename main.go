@@ -84,7 +84,9 @@ func main() {
 		elapsedTime := time.Since(startTime)
 		fmt.Printf("Total time: %s\n", elapsedTime)
 		fmt.Printf("Tasks: %d\n", count)
-		fmt.Printf("Average time: %s\n", time.Duration(elapsedTime.Nanoseconds()/count)*time.Nanosecond)
+		if count != 0 {
+			fmt.Printf("Average time: %s\n", time.Duration(elapsedTime.Nanoseconds()/count)*time.Nanosecond)
+		}
 	}
 	fmt.Println("It’s all done!")
 }
