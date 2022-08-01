@@ -120,7 +120,7 @@ func AnalyzerStr(source string, dest string, marshal bool, callback func(string)
 				}
 				_, err2 := destFile.Write(data)
 				if err2 != nil {
-					return
+					panic("Error writing formatted json file")
 				}
 			} else {
 				err := destEncoder.Encode(cycle)
@@ -137,13 +137,17 @@ func AnalyzerStr(source string, dest string, marshal bool, callback func(string)
 
 // 处理每行的show数据
 func processShowStr(arr []string, cycle *CycleStr) bool {
-	//cycle := new(Cycle)
+	if len(arr) <= 0 {
+		return false
+	}
 	offset := 0
-
 	if arr[0] != "(show" {
 		return false
 	}
 
+	if offset+7 > len(arr) {
+		return false
+	}
 	cycle.ID = arr[1]
 	cycle.Ball.Pos = VectorStr{arr[3], arr[4]}
 	cycle.Ball.Vel = VectorStr{arr[5], TrimBracket(arr[6])}
@@ -151,6 +155,9 @@ func processShowStr(arr []string, cycle *CycleStr) bool {
 
 	for i := 0; i < 22; i++ {
 		// (l或(r部分
+		if offset+2 > len(arr) {
+			return false
+		}
 		if strings.HasSuffix(arr[offset], "l") {
 			cycle.Players[i].ID = PlayerIDStr{Side: "left", Num: TrimBracket(arr[offset+1])}
 		} else {
@@ -159,6 +166,9 @@ func processShowStr(arr []string, cycle *CycleStr) bool {
 		offset += 2
 
 		// 基本信息部分
+		if offset+8 > len(arr) {
+			return false
+		}
 		cycle.Players[i].Type = arr[offset]
 		cycle.Players[i].Flag = arr[offset+1]
 		cycle.Players[i].Pos = VectorStr{arr[offset+2], arr[offset+3]}
@@ -168,6 +178,9 @@ func processShowStr(arr []string, cycle *CycleStr) bool {
 
 		// arm.pointing是可省略的
 		if arr[offset] != "(v" {
+			if offset+2 > len(arr) {
+				return false
+			}
 			cycle.Players[i].Arm.IsPointing = true
 			cycle.Players[i].Arm.Dest = VectorStr{arr[offset], arr[offset+1]}
 			offset += 2
@@ -177,6 +190,9 @@ func processShowStr(arr []string, cycle *CycleStr) bool {
 		}
 
 		// (v部分
+		if offset+3 > len(arr) {
+			return false
+		}
 		if arr[offset+1] == "h" {
 			cycle.Players[i].ViewMode = "high"
 		} else {
@@ -186,6 +202,9 @@ func processShowStr(arr []string, cycle *CycleStr) bool {
 		offset += 3
 
 		// (s部分
+		if offset+5 > len(arr) {
+			return false
+		}
 		cycle.Players[i].Stamina = arr[offset+1]
 		cycle.Players[i].Effort = arr[offset+2]
 		cycle.Players[i].Recovery = arr[offset+3]
@@ -194,6 +213,9 @@ func processShowStr(arr []string, cycle *CycleStr) bool {
 
 		// (f部分（可省略）
 		if arr[offset] == "(f" {
+			if offset+3 > len(arr) {
+				return false
+			}
 			cycle.Players[i].Focus.IsFocusing = true
 			if arr[offset+1] == "l" {
 				cycle.Players[i].Focus.Player = PlayerIDStr{Side: "left", Num: TrimBracket(arr[offset+2])}
@@ -207,6 +229,9 @@ func processShowStr(arr []string, cycle *CycleStr) bool {
 		}
 
 		// (c部分
+		if offset+12 > len(arr) {
+			return false
+		}
 		cycle.Players[i].Counts = ActionCountStr{
 			Kick:        arr[offset+1],
 			Dash:        arr[offset+2],
@@ -226,12 +251,15 @@ func processShowStr(arr []string, cycle *CycleStr) bool {
 
 // 处理(team数据
 func processTeamStr(arr []string, cycle *CycleStr) {
+	if len(arr) <= 0 {
+		return
+	}
 	if arr[0] != "(team" {
 		return
 	}
 	offset := 4
 	for {
-		if offset-4 >= len(cycle.Score) {
+		if offset-4 >= len(cycle.Score) || offset >= len(arr) {
 			break
 		}
 		cycle.Score[offset-4] = TrimBracket(arr[offset])
@@ -241,6 +269,9 @@ func processTeamStr(arr []string, cycle *CycleStr) {
 
 // 处理(playmode数据
 func processPlayModeStr(arr []string, cycle *CycleStr) {
+	if len(arr) <= 2 {
+		return
+	}
 	if arr[0] != "(playmode" {
 		return
 	}
@@ -375,12 +406,17 @@ func Analyzer(source string, dest string, marshal bool, callback func(string)) {
 
 // 处理每行的show数据
 func processShow(arr []string, cycle *Cycle) bool {
-	//cycle := new(Cycle)
+	if len(arr) <= 0 {
+		return false
+	}
 	if arr[0] != "(show" {
 		return false
 	}
 
 	offset := 0
+	if offset+7 > len(arr) {
+		return false
+	}
 	cycle.ID = cast.ToUint16(arr[1])
 	cycle.Ball.Pos = Vector{cast.ToFloat32(arr[3]), cast.ToFloat32(arr[4])}
 	cycle.Ball.Vel = Vector{cast.ToFloat32(arr[5]), cast.ToFloat32(TrimBracket(arr[6]))}
@@ -389,6 +425,9 @@ func processShow(arr []string, cycle *Cycle) bool {
 
 	for i := 0; i < 22; i++ {
 		// (l或(r部分
+		if offset+2 > len(arr) {
+			return false
+		}
 		if strings.HasSuffix(arr[offset], "l") {
 			cycle.Players[i].ID = PlayerID{Side: "left", Num: cast.ToUint8(TrimBracket(arr[offset+1]))}
 		} else {
@@ -397,6 +436,9 @@ func processShow(arr []string, cycle *Cycle) bool {
 		offset += 2
 
 		// 基本信息部分
+		if offset+8 > len(arr) {
+			return false
+		}
 		cycle.Players[i].Type = cast.ToUint8(arr[offset])
 		cycle.Players[i].Flag = cast.ToUint32(arr[offset+1])
 		cycle.Players[i].Pos = Vector{cast.ToFloat32(arr[offset+2]), cast.ToFloat32(arr[offset+3])}
@@ -406,12 +448,18 @@ func processShow(arr []string, cycle *Cycle) bool {
 
 		// arm.pointing是可省略的
 		if arr[offset] != "(v" {
+			if offset+2 > len(arr) {
+				return false
+			}
 			cycle.Players[i].Arm.IsPointing = true
 			cycle.Players[i].Arm.Dest = Vector{cast.ToFloat32(arr[offset]), cast.ToFloat32(arr[offset+1])}
 			offset += 2
 		}
 
 		// (v部分
+		if offset+3 > len(arr) {
+			return false
+		}
 		if arr[offset+1] == "h" {
 			cycle.Players[i].ViewMode = "high"
 		} else {
@@ -421,6 +469,9 @@ func processShow(arr []string, cycle *Cycle) bool {
 		offset += 3
 
 		// (s部分
+		if offset+5 > len(arr) {
+			return false
+		}
 		cycle.Players[i].Stamina = cast.ToFloat32(arr[offset+1])
 		cycle.Players[i].Effort = cast.ToFloat32(arr[offset+2])
 		cycle.Players[i].Recovery = cast.ToFloat32(arr[offset+3])
@@ -429,6 +480,9 @@ func processShow(arr []string, cycle *Cycle) bool {
 
 		// (f部分（可省略）
 		if arr[offset] == "(f" {
+			if offset+3 > len(arr) {
+				return false
+			}
 			cycle.Players[i].Focus.IsFocusing = true
 			if arr[offset+1] == "l" {
 				cycle.Players[i].Focus.Player = PlayerID{Side: "left", Num: cast.ToUint8(TrimBracket(arr[offset+2]))}
@@ -441,6 +495,9 @@ func processShow(arr []string, cycle *Cycle) bool {
 		}
 
 		// (c部分
+		if offset+12 > len(arr) {
+			return false
+		}
 		cycle.Players[i].Counts = ActionCount{
 			Kick:        cast.ToUint(arr[offset+1]),
 			Dash:        cast.ToUint(arr[offset+2]),
@@ -460,26 +517,27 @@ func processShow(arr []string, cycle *Cycle) bool {
 
 // 处理(team数据
 func processTeam(arr []string, cycle *Cycle) {
+	if len(arr) <= 0 {
+		return
+	}
 	if arr[0] != "(team" {
 		return
 	}
 	offset := 4
 	for {
-		if offset-4 >= len(arr) {
+		if offset-4 >= len(cycle.Score) || offset >= len(arr) {
 			break
 		}
-		if !strings.HasSuffix(arr[offset], ")") {
-			cycle.Score[offset-4] = cast.ToUint16(arr[offset])
-			offset += 1
-		} else {
-			cycle.Score[offset-4] = cast.ToUint16(TrimBracket(arr[offset]))
-			break
-		}
+		cycle.Score[offset-4] = cast.ToUint16(TrimBracket(arr[offset]))
+		offset += 1
 	}
 }
 
 // 处理(playmode数据
 func processPlayMode(arr []string, cycle *Cycle) {
+	if len(arr) <= 2 {
+		return
+	}
 	if arr[0] != "(playmode" {
 		return
 	}
